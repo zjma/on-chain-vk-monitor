@@ -18,6 +18,6 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
           - >
-            apt-get update && apt-get install -y curl &&
-            curl -o /tmp/main.py https://raw.githubusercontent.com/zjma/on-chain-vk-monitor/refs/heads/main/main.py &&
-            python /tmp/script.py
+            apt-get update && apt-get install -y wget &&
+            wget https://raw.githubusercontent.com/zjma/on-chain-vk-monitor/refs/heads/main/main.py &&
+            python main.py
