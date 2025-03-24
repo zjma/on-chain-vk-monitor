@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zhoujun-deploy-2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zhoujun-deploy-2
+  template:
+    metadata:
+      labels:
+        app: zhoujun-deploy-2
+    spec:
+      containers:
+      - name: main
+        image: python:3.9-slim
+        command: ["/bin/sh", "-c"]
+        args:
+          - >
+            apt-get update && apt-get install -y curl &&
+            curl -o /tmp/main.py https://raw.githubusercontent.com/zjma/on-chain-vk-monitor/refs/heads/main/main.py &&
+            python /tmp/script.py
