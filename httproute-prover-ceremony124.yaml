@@ -1,0 +1,23 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: prover-ceremony124
+  namespace: keyless-devnet
+spec:
+  hostnames:
+  - prover.keyless.devnet.aptoslabs.com
+  parentRefs:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: keyless-prover
+    sectionName: https
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /ceremony124
+    backendRefs:
+    - group: ""
+      kind: Service
+      name: prover-ceremony124
+      port: 80

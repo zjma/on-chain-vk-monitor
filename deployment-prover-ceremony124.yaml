@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prover-ceremony124
+spec:
+  replicas: 1 # Managed by HPA
+  selector:
+    matchLabels:
+      app: prover-ceremony124
+  template:
+    metadata:
+      labels:
+        app: prover-ceremony124
+    spec: {} # Corresponding images, etc.

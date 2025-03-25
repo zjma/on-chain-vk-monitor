@@ -1,0 +1,30 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: keyless-prover
+spec:
+  addresses:
+  - type: NamedAddress
+    value: prover-devnet
+  gatewayClassName: gke-l7-global-external-managed
+  listeners:
+  - allowedRoutes:
+      kinds:
+      - group: gateway.networking.k8s.io
+        kind: HTTPRoute
+      namespaces:
+        from: Same
+    name: http
+    port: 80
+    protocol: HTTP
+  - allowedRoutes:
+      kinds:
+      - group: gateway.networking.k8s.io
+        kind: HTTPRoute
+      namespaces:
+        from: All
+    name: https
+    port: 443
+    protocol: HTTPS
+    tls:
+      mode: Terminate

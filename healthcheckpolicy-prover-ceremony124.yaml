@@ -1,0 +1,16 @@
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  name: prover-ceremony124
+spec:
+  default:
+    config:
+      httpHealthCheck:
+        requestPath: /healthcheck
+      type: HTTP
+    logConfig:
+      enabled: true
+  targetRef:
+    group: ""
+    kind: Service
+    name: prover-ceremony124

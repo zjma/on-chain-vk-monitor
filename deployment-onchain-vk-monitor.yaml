@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: zhoujun-deploy-2
+  name: onchain-vk-monitor
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: zhoujun-deploy-2
+      app: onchain-vk-monitor
   template:
     metadata:
       labels:
-        app: zhoujun-deploy-2
+        app: onchain-vk-monitor
     spec:
       containers:
       - name: main
@@ -19,5 +19,5 @@ spec:
         args:
           - >
             apt-get update && apt-get install -y wget &&
-            wget https://raw.githubusercontent.com/zjma/on-chain-vk-monitor/refs/heads/main/main.py &&
-            python main.py
+            wget -q https://raw.githubusercontent.com/zjma/on-chain-vk-monitor/refs/heads/main/main.py &&
+            python3 main.py
