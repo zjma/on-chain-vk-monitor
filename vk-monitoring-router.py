@@ -24,7 +24,7 @@ class OnchainTwpkCache:
             now = time.time()
             if now - self.last_update_time < CACHE_TTL: return self.value
             async with aiohttp.ClientSession() as session:
-                async with session.get(f'https://prover.keyless.{CHAIN_NAME}.aptoslabs.com/cached/keyless-config', timeout=2) as resp:
+                async with session.get(f'https://fullnode.{CHAIN_NAME}.aptoslabs.com/v1/accounts/0x1/resource/0x1::keyless_account::Configuration', timeout=2) as resp:
                     assert resp.status == 200
                     data = await resp.json()
                     self.value = data['data']['training_wheels_pubkey']['vec'][0]
@@ -40,7 +40,8 @@ class ServiceNameCache:
     async def get_or_fetch(self, twpk):
         async with self.lock:
             if twpk in self.names_by_twpk: return self.names_by_twpk[twpk]
-            label_selector = f"twpk={twpk}"
+            truncated_twpk = twpk[:63]  # k8s label value length limit
+            label_selector = f"twpk={truncated_twpk}"
             services = k8s_core.list_namespaced_service(namespace=NAMESPACE, label_selector=label_selector)
             service_name = services.items[0].metadata.name
             self.names_by_twpk[twpk] = service_name
