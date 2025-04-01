@@ -53,9 +53,12 @@ service_name_cache = ServiceNameCache()
 
 
 async def route_handler(request):
+    print(f'HELLO', flush=True)
     path = request.match_info.get("path", "")
     onchain_twpk = await onchain_twpk_cache.get_or_fetch()
+    print(f'onchain_twpk={onchain_twpk}', flush=True)
     service_name = await service_name_cache.get_or_fetch(onchain_twpk)
+    print(f'service_name={service_name}', flush=True)
     target_base = f'http://{service_name}'
     target_url = f"{target_base}/{path}"
 
