@@ -12,6 +12,7 @@ spec:
       labels:
         app: vk-monitoring-router
     spec:
+      serviceAccountName: vk-monitoring-router
       containers:
       - name: main
         image: python:3.11-slim

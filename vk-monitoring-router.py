@@ -59,7 +59,7 @@ async def route_handler(request):
     print(f'onchain_twpk={onchain_twpk}', flush=True)
     service_name = await service_name_cache.get_or_fetch(onchain_twpk)
     print(f'service_name={service_name}', flush=True)
-    target_base = f'http://{service_name}'
+    target_base = f'http://{service_name}:8080'
     target_url = f"{target_base}/{path}"
 
     try:
@@ -70,8 +70,10 @@ async def route_handler(request):
                     headers=dict(request.headers),
                     data=await request.read()
             ) as resp:
+                print('request forwarded?', flush=True)
                 headers = dict(resp.headers)
                 body = await resp.read()
+                print('response obtained?', flush=True)
                 return web.Response(body=body, status=resp.status, headers=headers)
     except Exception as e:
         return web.json_response({"error": str(e)}, status=502)
