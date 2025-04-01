@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prover-ceremony124
+  labels:
+    zhoujun-debug-20250326: v0
 spec:
   replicas: 1 # Managed by HPA
   selector:
@@ -11,4 +13,12 @@ spec:
     metadata:
       labels:
         app: prover-ceremony124
-    spec: {} # Corresponding images, etc.
+        zhoujun-debug-20250326: v0
+    spec:
+      containers:
+        - name: main
+          image: nginxdemos/hello
+          ports:
+            - containerPort: 80
+              name: http
+              protocol: TCP
