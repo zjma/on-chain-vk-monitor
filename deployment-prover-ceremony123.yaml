@@ -1,9 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  labels:
+    zhoujun-debug-20250326: v0
   name: prover-ceremony123
 spec:
-  replicas: 1 # Managed by HPA
+  replicas: 1
   selector:
     matchLabels:
       app: prover-ceremony123
@@ -11,4 +13,17 @@ spec:
     metadata:
       labels:
         app: prover-ceremony123
-    spec: {} # Corresponding images, etc.
+    spec:
+      containers:
+        - name: hello-nginx
+          image: nginxdemos/hello:latest
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: vol-0
+              mountPath: /etc/nginx/conf.d/hello.conf
+              subPath: hello.conf
+      volumes:
+        - name: vol-0
+          configMap:
+            name: mount-to-change-nginx-port

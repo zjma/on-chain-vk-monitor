@@ -1,16 +1,18 @@
 apiVersion: networking.gke.io/v1
 kind: HealthCheckPolicy
 metadata:
-  name: prover-ceremony123
+  name: vk-monitoring-router
+  labels:
+    zhoujun-debug-20250326: v0
 spec:
   default:
     config:
       httpHealthCheck:
-        requestPath: /healthcheck
+        requestPath: /healthz
       type: HTTP
     logConfig:
       enabled: true
   targetRef:
     group: ""
     kind: Service
-    name: prover-ceremony123
+    name: vk-monitoring-router

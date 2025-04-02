@@ -16,13 +16,15 @@ spec:
         zhoujun-debug-20250326: v0
     spec:
       containers:
-      - args:
-        - -listen=:8080
-        - -text=HELLOOO
-        image: hashicorp/http-echo
-        imagePullPolicy: Always
-        name: main
-        ports:
-        - containerPort: 8080
-          name: http
-          protocol: TCP
+        - name: hello-nginx
+          image: nginxdemos/hello:latest
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: vol-0
+              mountPath: /etc/nginx/conf.d/hello.conf
+              subPath: hello.conf
+      volumes:
+        - name: vol-0
+          configMap:
+            name: mount-to-change-nginx-port
