@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mock-onchain-vk-oracle
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mock-onchain-vk-oracle
+  template:
+    metadata:
+      labels:
+        app: mock-onchain-vk-oracle
+    spec:
+      containers:
+      - name: main
+        image: python:3.11-slim
+        command: ["/bin/sh", "-c"]
+        args:
+          - >
+            apt-get update && apt-get install -y wget &&
+            pip3 install --no-cache-dir flask &&
+            wget -q https://raw.githubusercontent.com/zjma/on-chain-vk-monitor/refs/heads/main/mock-onchain-vk-oracle.py &&
+            python3 mock-onchain-vk-oracle.py
+        ports:
+          - containerPort: 8080
+        env:
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: CHAIN_NAME
+            value: devnet
