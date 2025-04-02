@@ -54,10 +54,11 @@ service_name_cache = ServiceNameCache()
 
 async def route_handler(request: web.Request) -> web.StreamResponse:
     path = request.match_info.get("path", "")
+    print(f'path={path}', flush=True)
     onchain_twpk = await onchain_twpk_cache.get_or_fetch()
-    # print(f'onchain_twpk={onchain_twpk}', flush=True)
+    print(f'onchain_twpk={onchain_twpk}', flush=True)
     service_name = await service_name_cache.get_or_fetch(onchain_twpk)
-    # print(f'service_name={service_name}', flush=True)
+    print(f'service_name={service_name}', flush=True)
     target_base = f'http://{service_name}:8080'
     target_url = f"{target_base}/{path}"
     try:
@@ -68,8 +69,10 @@ async def route_handler(request: web.Request) -> web.StreamResponse:
                     headers=dict(request.headers),
                     data=await request.read()
             ) as resp:
+                print('CHECK1')
                 headers = dict(resp.headers)
                 body = await resp.read()
+                print('CHECK2')
                 return web.Response(body=body, status=resp.status, headers=headers)
     except Exception as e:
         return web.json_response({"error": str(e)}, status=502)
