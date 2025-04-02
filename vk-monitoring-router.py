@@ -125,7 +125,7 @@ async def healthcheck_handler(_request):
 
 app = web.Application()
 app.router.add_get("/healthz", healthcheck_handler)
-app.router.add_route("*", "{/path:.*}", route_handler)
+app.router.add_route("*", "/{path:.*}", route_handler)
 
 
 if __name__ == "__main__":
