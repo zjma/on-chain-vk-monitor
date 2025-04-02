@@ -69,10 +69,10 @@ async def route_handler(request: web.Request) -> web.StreamResponse:
                     headers=dict(request.headers),
                     data=await request.read()
             ) as resp:
-                print('CHECK1')
+                print('CHECK1', flush=True)
                 headers = dict(resp.headers)
                 body = await resp.read()
-                print('CHECK2')
+                print('CHECK2', flush=True)
                 return web.Response(body=body, status=resp.status, headers=headers)
     except Exception as e:
         return web.json_response({"error": str(e)}, status=502)
