@@ -69,11 +69,25 @@ async def route_handler(request: web.Request) -> web.StreamResponse:
                     headers=dict(request.headers),
                     data=await request.read()
             ) as resp:
-                print('CHECK1', flush=True)
-                headers = dict(resp.headers)
-                body = await resp.read()
-                print('CHECK2', flush=True)
-                return web.Response(body=body, status=resp.status, headers=headers)
+                print(f'CHECK1', flush=True)
+                proxy_resp = web.StreamResponse(status=resp.status)
+                excluded_headers = {
+                    'Content-Length', 'Transfer-Encoding', 'Connection', 'Keep-Alive',
+                    'Proxy-Authenticate', 'Proxy-Authorization', 'TE', 'Trailers',
+                    'Upgrade'
+                }
+                for key, value in resp.headers.items():
+                    if key not in excluded_headers:
+                        proxy_resp.headers[key] = value
+                print(f'CHECK2', flush=True)
+                await proxy_resp.prepare(request)
+                print(f'CHECK3', flush=True)
+                async for chunk in resp.content.iter_chunked(1024):
+                    await proxy_resp.write(chunk)
+                print(f'CHECK4', flush=True)
+                await proxy_resp.write_eof()
+                print(f'CHECK5', flush=True)
+                return proxy_resp
     except Exception as e:
         return web.json_response({"error": str(e)}, status=502)
 
