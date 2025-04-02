@@ -1,5 +1,6 @@
 import asyncio
 import aiohttp
+import kubernetes.client.exceptions
 from aiohttp import web
 import os
 import time
@@ -44,7 +45,11 @@ class ServiceNameCache:
                 return self.names_by_twpk[twpk]
             truncated_twpk = twpk[:63]  # k8s label value length limit
             label_selector = f"twpk={truncated_twpk}"
-            services = k8s_core.list_namespaced_service(namespace=NAMESPACE, label_selector=label_selector)
+            try:
+                services = k8s_core.list_namespaced_service(namespace=NAMESPACE, label_selector=label_selector)
+            except kubernetes.client.exceptions.ApiException as e:
+                print(e)
+                return None
             if len(services.items) == 0:
                 return None
             service_name = services.items[0].metadata.name
