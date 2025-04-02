@@ -61,7 +61,7 @@ async def route_handler(request):
     print(f'service_name={service_name}', flush=True)
     target_base = f'http://{service_name}:8080'
     target_url = f"{target_base}/{path}"
-
+    print(f'CHECKPOINT')
     try:
         async with aiohttp.ClientSession() as session:
             async with session.request(
