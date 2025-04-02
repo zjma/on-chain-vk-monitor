@@ -24,8 +24,9 @@ class OnchainTwpkCache:
             now = time.time()
             if now - self.last_update_time < CACHE_TTL: return self.value
             async with aiohttp.ClientSession() as session:
-                async with session.get(KEYLESS_CONFIG_URL, timeout=2) as resp:
-                    assert resp.status == 200
+                async with session.get(KEYLESS_CONFIG_URL, timeout=2, ssl=False) as resp:
+                    if resp.status != 200:
+                        return None
                     data = await resp.json()
                     self.value = data['data']['training_wheels_pubkey']['vec'][0]
                     self.last_update_time = now
@@ -59,7 +60,6 @@ async def route_handler(request: web.Request) -> web.StreamResponse:
     path = request.match_info.get("path", "")
     print(f'path={path}', flush=True)
     path_segments = [segment for segment in path.split('/') if segment.strip() != '']
-    # (target_twpk, target_path_segments) = reroute(path_segments)
     if path_segments == []:
         return web.Response(text='''
 Usage:
@@ -70,7 +70,10 @@ Usage:
     if path_segments == ['v0', 'prove']:
         target_twpk = await onchain_twpk_cache.get_or_fetch()
         if target_twpk is None:
-            return web.json_response()
+            return web.json_response(
+                text="Router could not fetch on-chain circuit release info.",
+                status=500,
+            )
         target_path_segments = path_segments
     else:
         target_twpk = path_segments[0]
@@ -80,7 +83,6 @@ Usage:
     service_name = await service_name_cache.get_or_fetch(target_twpk)
     if service_name is None:
         return web.json_response(
-            {},
             text=f"Targeting the circuit release with twpk {target_twpk}, but no prover service deployment found for it",
             status=404,
         )
