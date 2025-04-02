@@ -7,8 +7,8 @@ from kubernetes import config, client
 
 
 CACHE_TTL = 5
-CHAIN_NAME = os.environ['CHAIN_NAME']
 NAMESPACE = os.environ['NAMESPACE']
+KEYLESS_CONFIG_URL = os.environ['KEYLESS_CONFIG_URL']
 config.load_incluster_config()
 k8s_core = client.CoreV1Api()
 
@@ -24,7 +24,7 @@ class OnchainTwpkCache:
             now = time.time()
             if now - self.last_update_time < CACHE_TTL: return self.value
             async with aiohttp.ClientSession() as session:
-                async with session.get(f'https://fullnode.{CHAIN_NAME}.aptoslabs.com/v1/accounts/0x1/resource/0x1::keyless_account::Configuration', timeout=2) as resp:
+                async with session.get(KEYLESS_CONFIG_URL, timeout=2) as resp:
                     assert resp.status == 200
                     data = await resp.json()
                     self.value = data['data']['training_wheels_pubkey']['vec'][0]
@@ -39,10 +39,13 @@ class ServiceNameCache:
 
     async def get_or_fetch(self, twpk):
         async with self.lock:
-            if twpk in self.names_by_twpk: return self.names_by_twpk[twpk]
+            if twpk in self.names_by_twpk:
+                return self.names_by_twpk[twpk]
             truncated_twpk = twpk[:63]  # k8s label value length limit
             label_selector = f"twpk={truncated_twpk}"
             services = k8s_core.list_namespaced_service(namespace=NAMESPACE, label_selector=label_selector)
+            if len(services.items) == 0:
+                return None
             service_name = services.items[0].metadata.name
             self.names_by_twpk[twpk] = service_name
             return service_name
@@ -55,12 +58,36 @@ service_name_cache = ServiceNameCache()
 async def route_handler(request: web.Request) -> web.StreamResponse:
     path = request.match_info.get("path", "")
     print(f'path={path}', flush=True)
-    onchain_twpk = await onchain_twpk_cache.get_or_fetch()
-    print(f'onchain_twpk={onchain_twpk}', flush=True)
-    service_name = await service_name_cache.get_or_fetch(onchain_twpk)
-    print(f'service_name={service_name}', flush=True)
+    path_segments = [segment for segment in path.split('/') if segment.strip() != '']
+    # (target_twpk, target_path_segments) = reroute(path_segments)
+    if path_segments == []:
+        return web.Response(text='''
+Usage:
+    to work with the currently on-chain circuit release, use path `./v0/prove`;
+    to work with a specific circuit release, use path `./<circuit-release-twpk>/v0/prove`.
+''')
+
+    if path_segments == ['v0', 'prove']:
+        target_twpk = await onchain_twpk_cache.get_or_fetch()
+        if target_twpk is None:
+            return web.json_response()
+        target_path_segments = path_segments
+    else:
+        target_twpk = path_segments[0]
+        target_path_segments = path_segments[1:]
+
+    print(f'target_twpk={target_twpk}', flush=True)
+    service_name = await service_name_cache.get_or_fetch(target_twpk)
+    if service_name is None:
+        return web.json_response(
+            {},
+            text=f"Targeting the circuit release with twpk {target_twpk}, but no prover service deployment found for it",
+            status=404,
+        )
     target_base = f'http://{service_name}:8080'
-    target_url = f"{target_base}/{path}"
+    target_path = '/'.join(target_path_segments)
+    target_url = f"{target_base}/{target_path}"
+    print(f'target_url={target_url}')
     try:
         async with aiohttp.ClientSession() as session:
             async with session.request(
@@ -98,7 +125,7 @@ async def healthcheck_handler(_request):
 
 app = web.Application()
 app.router.add_get("/healthz", healthcheck_handler)
-app.router.add_route("*", "/{path:.*}", route_handler)
+app.router.add_route("*", "{path:.*}", route_handler)
 
 
 if __name__ == "__main__":
